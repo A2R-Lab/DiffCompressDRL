@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class SparseArray:
     def __init__(self):
         self.reset()
@@ -54,7 +55,8 @@ class ObservationCompressor:
         self.obs_size = (self.buffer_size * self.n_envs) // self.n_stack
         self.obs = np.zeros((self.obs_size,) + self.image_shape, dtype=self.dtype)
         self.sparse_obs = [
-            [SparseArray() for _ in range(self.n_stack - 1)] for _ in range(self.obs_size)
+            [SparseArray() for _ in range(self.n_stack - 1)]
+            for _ in range(self.obs_size)
         ]
         self.obs_inds = -1 * np.ones(
             (self.buffer_size * self.n_envs, self.n_stack), dtype=np.int32

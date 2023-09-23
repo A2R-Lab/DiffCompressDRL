@@ -121,7 +121,9 @@ def train(alg, env, seed, compress, total_timesteps=1e7):
         print("Invalid alg supplied.")
         return
 
-    model.learn(total_timesteps=total_timesteps, tb_log_name=run_name, callback=eval_callback)
+    model.learn(
+        total_timesteps=total_timesteps, tb_log_name=run_name, callback=eval_callback
+    )
     model.save(run_name)
 
 
@@ -143,7 +145,9 @@ def create_parser():
     parser.add_argument(
         "--compress", action="store_true", help="Use observation space compression."
     )
-    parser.add_argument("--all", action="store_true", help="Run all experiments for 500k steps.")
+    parser.add_argument(
+        "--all", action="store_true", help="Run all experiments for 500k steps."
+    )
 
     return parser
 
