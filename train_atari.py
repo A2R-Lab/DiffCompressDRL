@@ -41,7 +41,7 @@ class CustomCallback(BaseCallback):
             print("Model has neither a replay_buffer or a rollout_buffer.")
             return False
 
-        # Only log obs_nonzero_count if using quantized/compressed buffer
+        # Only log obs_nonzero_count if using compressed buffer
         if hasattr(buffer, "obs_comp"):
             self.logger.record(
                 "eval/obs_nonzero_count", buffer.obs_comp.get_nonzero_count()
