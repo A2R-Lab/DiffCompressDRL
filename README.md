@@ -1,16 +1,48 @@
 # DiffCompressDRL
-Source code and numerical experiments for the paper: "Differentially Encoded Observation Spaces for Perceptive Reinforcement Learning"
+Source code and numerical experiments for the paper: "[Differentially Encoded Observation Spaces for Perceptive Reinforcement Learning](https://arxiv.org/pdf/2310.01767.pdf)"
+
+**This package contains submodules make sure to run ```git submodule update --init --recursive```** after cloning!
 
 ## Atari Experiments
 ```
-python3 train_atari.py --env BreakoutNoFrameskip-v4 --alg QRDQN --compress
+cd atari_compress
+python3 train.py --env ENV --alg ALG --compress
 ```
+where `--compress` turns on compression and leaving it off will run the standard algorithm
+
+and where `ALG` is one of:
+```
+PPO
+QRDQN
+```
+and where `ENV` is one of:
+```
+AsteroidsNoFrameskip-v4
+BeamRiderNoFrameskip-v4
+BreakoutNoFrameskip-v4
+EnduroNoFrameskip-v4
+MsPacmanNoFrameskip-v4
+PongNoFrameskip-v4
+QbertNoFrameskip-v4
+RoadRunnerNoFrameskip-v4
+SeaquestNoFrameskip-v4
+SpaceInvadersNoFrameskip-v4
+```
+
 ## DeepMind Control Suite Tasks
 ```
-git clone git@github.com:A2R-Lab/drqv2_compress.git
 cd drqv2_compress
-python3 train.py --task=quadruped_walk --full_compress=True
+python3 train.py --task=TASK --full_compress=True
 ```
+where you can turn on half or full compression with `--full_compress=True` or `--half_compress=True`.
+
+and where `TASK` is one of:
+```
+quadruped_walk
+walker_walk
+```
+or any of the many other tasks that we have not tested in the DMC (see `/drqv2_compess/cfpgs/task`)
+
 ### Citing
 To cite this work in your research, please use the following bibtex:
 ```

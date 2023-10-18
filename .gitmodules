@@ -1,0 +1,3 @@
+[submodule "drqv2_compress"]
+	path = drqv2_compress
+	url = git@github.com:A2R-Lab/drqv2_compress.git
