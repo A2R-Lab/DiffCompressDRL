@@ -1,7 +1,14 @@
 # DiffCompressDRL
+<img width="720" alt="image_diff_example (1)" src="https://github.com/A2R-Lab/DiffCompressDRL/assets/8332062/7cbea8b2-225c-4414-a9f7-1fd6f6685f3c">
+
+
 Source code and numerical experiments for the paper: "[Differentially Encoded Observation Spaces for Perceptive Reinforcement Learning](https://arxiv.org/pdf/2310.01767.pdf)"
 
 **This package contains submodules make sure to run ```git submodule update --init --recursive```** after cloning!
+
+## Installation
+
+
 
 ## Atari Experiments
 ```
