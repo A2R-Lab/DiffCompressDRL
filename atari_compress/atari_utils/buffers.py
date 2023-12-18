@@ -1,3 +1,8 @@
+"""
+Classes adapted from stable-baselines3 buffers.py implementation
+https://github.com/DLR-RM/stable-baselines3/blob/master/stable_baselines3/common/buffers.py
+"""
+
 import warnings
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Generator, List, Optional, Union, Tuple
@@ -98,6 +103,7 @@ class CompressedReplayBuffer(ReplayBuffer):
         # Same, for actions
         action = action.reshape((self.n_envs, self.action_dim))
 
+        # Store observations in observation compressor
         self.obs_comp.add(obs, self.pos)
         self.obs_comp.add(next_obs, (self.pos + 1) % self.buffer_size)
 
@@ -129,6 +135,8 @@ class CompressedReplayBuffer(ReplayBuffer):
             ((batch_idx + 1) % self.buffer_size) + (env_idx * self.buffer_size)
             for batch_idx, env_idx in zip(batch_inds, env_indices)
         ]
+
+        # Get observations from observation compressor
         obs = self._normalize_obs(self.obs_comp.get(inds), env)
         next_obs = self._normalize_obs(self.obs_comp.get(next_inds), env)
 
@@ -261,6 +269,7 @@ class CompressedRolloutBuffer(RolloutBuffer):
         # Same reshape, for actions
         action = action.reshape((self.n_envs, self.action_dim))
 
+        # Store observations in observation compressor
         self.obs_comp.add(obs, self.pos)
 
         self.actions[self.pos] = np.array(action).copy()

@@ -2,41 +2,80 @@ import numpy as np
 
 
 class SparseArray:
+    """
+    Custom sparse array implementation
+    """
     def __init__(self):
         self.reset()
 
-    def reset(self):
+    def reset(self) -> None:
         self._shape = None
         self._dtype = None
         self._store_raw = False
         self._arr = None
         self._inds = None
         self._vals = None
+        self._nonzero_count = 0
+        self._nbytes = 0
 
-    def set(self, arr):
+    def set(self, arr: np.ndarray) -> None:
+        """
+        Convert and store input array in sparse format.
+        :param arr: Numpy array
+        """
         self.reset()
-
-        u, v = np.nonzero(arr)
-        u = u.astype(np.uint8)
-        v = v.astype(np.uint8)
-
         self._shape = arr.shape
         self._dtype = arr.dtype
 
-        # don't store as sparse if it will be larger
-        if len(u) > np.prod(self._shape) / 4:
+        # Get non-zero indices
+        indices = np.nonzero(arr)
+
+        # Get non-zero count
+        self._nonzero_count = len(indices[0]) if len(indices) else 0
+
+        # Get storage type of indices based on maximum dimension
+        max_dim = max(self._shape)
+        dtypes = [np.uint8, np.uint16, np.uint32, np.uint64]
+        for dtype in dtypes:
+            if max_dim < np.iinfo(dtype).max:
+                self._ind_dtype = dtype
+                break
+
+        # Check if we should store raw array (i.e. if storing
+        # each non-zero element will take more memory than
+        # storing raw array, store raw array)
+        self._nbytes = arr.nbytes
+        indices_nbytes = len(indices) * len(indices[0]) * indices[0].itemsize if len(indices) else 0
+        sparse_nbytes = indices_nbytes + self._nonzero_count * arr.itemsize
+        if sparse_nbytes < self._nbytes:
+            self._inds = tuple([ind.astype(self._ind_dtype) for ind in indices])
+            self._vals = arr[self._inds]
+            self._nbytes = sparse_nbytes
+        else:
             self._store_raw = True
             self._arr = arr
-        else:
-            self._inds = (u, v)
-            self._vals = arr[self._inds]
 
-    def nonzero_count(self):
-        if self._arr is None and self._vals is None:
-            return 0
-        return np.prod(self._shape) / 4 if self._store_raw else len(self._vals)
+    @property
+    def nonzero_count(self) -> int:
+        """
+        Gets number of non-zero elements in stored array.
+        :returns: non-zero element count
+        """
+        return self._nonzero_count
 
-    def to_numpy(self):
+    @property
+    def nbytes(self) -> int:
+        """
+        Returns number of bytes used to store array internally.
+        :returns: bytes
+        """
+        return self._nbytes
+
+    def to_numpy(self) -> np.ndarray:
+        """
+        Returns stored sparse array in dense numpy array format.
+        :returns: numpy array
+        """
         if self._store_raw:
             return self._arr
         arr = np.zeros(self._shape, dtype=self._dtype)
