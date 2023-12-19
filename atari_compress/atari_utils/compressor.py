@@ -1,9 +1,11 @@
+import sys
 import numpy as np
+from typing import Tuple
 
 
 class SparseArray:
     """
-    Custom sparse array implementation
+    Custom sparse array implementation.
     """
     def __init__(self):
         self.reset()
@@ -58,7 +60,7 @@ class SparseArray:
     @property
     def nonzero_count(self) -> int:
         """
-        Gets number of non-zero elements in stored array.
+        Returns number of non-zero elements in stored array.
         :returns: non-zero element count
         """
         return self._nonzero_count
@@ -84,13 +86,25 @@ class SparseArray:
 
 
 class ObservationCompressor:
-    def __init__(self, buffer_size=128, n_envs=8, n_stack=4, image_shape=(84, 84)):
+    """
+    Class that supports the storage and retrieval of compressed,
+    image-based observations.
+    """
+    def __init__(self, buffer_size: int, n_envs: int, n_stack: int, image_shape: Tuple, dtype=np.uint8):
+        """
+        :param buffer_size: size of replay/rollout buffer
+        :param n_envs: number of environments used in rollout generation
+        :param n_stack: number of subsequent images in frame stack
+        :param image_shape: shape of observation image array
+        :param dtype: numoy data type
+        """
         self.buffer_size = buffer_size
         self.n_envs = n_envs
         self.n_stack = n_stack
         self.image_shape = image_shape
-        self.dtype = np.uint8
+        self.dtype = dtype
 
+        # Create internal observation storage and indexing
         self.obs_size = (self.buffer_size * self.n_envs) // self.n_stack
         self.obs = np.zeros((self.obs_size,) + self.image_shape, dtype=self.dtype)
         self.sparse_obs = [
@@ -101,14 +115,32 @@ class ObservationCompressor:
             (self.buffer_size * self.n_envs, self.n_stack), dtype=np.int32
         )
 
-    def get_nonzero_count(self):
+    @property
+    def nonzero_count(self) -> int:
+        """
+        Returns number of non-zero elements stored in all observations.
+        :returns: non-zero element count
+        """
         total = 0
         for stack in self.sparse_obs:
             for sa in stack:
-                total += sa.nonzero_count()
+                total += sa.nonzero_count
         return total
 
-    def _add_obs(self, obs, pos):
+    @property
+    def nbytes(self) -> int:
+        """
+        Returns number of bytes used to store all observations.
+        :returns: bytes
+        """
+        sparse_nbytes = sys.getsizeof(self.sparse_obs)
+        for stack in self.sparse_obs:
+            for sa in stack:
+                sparse_nbytes += sa.nbytes
+
+        return sparse_nbytes + self.obs.nbytes + self.obs_inds.nbytes
+
+    def _add_obs(self, obs: np.ndarray, pos: int):
         assert obs.shape == (self.n_stack,) + self.image_shape
         assert 0 <= pos < self.buffer_size * self.n_envs
 
@@ -146,7 +178,7 @@ class ObservationCompressor:
             obs_diff = observation.astype(np.int16) - self.obs[obs_pos].astype(np.int16)
             self.sparse_obs[obs_pos][sparse_obs_pos - 1].set(obs_diff)
 
-    def add(self, obs, pos):
+    def add(self, obs: np.ndarray, pos: int):
         assert (
             obs.shape
             == (
@@ -160,7 +192,7 @@ class ObservationCompressor:
         for i in range(self.n_envs):
             self._add_obs(obs[i], (self.buffer_size * i) + pos)
 
-    def _get_obs(self, idx):
+    def _get_obs(self, idx: int):
         # Get observation at index idx from self.obs and/or self.sparse_obs
         if idx == -1:
             return np.zeros(self.image_shape)
@@ -179,7 +211,7 @@ class ObservationCompressor:
         # Diff obs with self.obs[obs_pos]
         return obs_base + self.sparse_obs[obs_idx][sparse_obs_idx - 1].to_numpy()
 
-    def get(self, batch_inds):
+    def get(self, batch_inds: np.ndarray):
         # Get observation at batch_inds relative to self.obs_inds
         assert all([0 <= idx < self.buffer_size * self.n_envs for idx in batch_inds])
 
