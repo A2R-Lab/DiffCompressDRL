@@ -7,6 +7,7 @@ class SparseArray:
     """
     Custom sparse array implementation.
     """
+
     def __init__(self):
         self.reset()
 
@@ -47,7 +48,9 @@ class SparseArray:
         # each non-zero element will take more memory than
         # storing raw array, store raw array)
         self._nbytes = arr.nbytes
-        indices_nbytes = len(indices) * len(indices[0]) * indices[0].itemsize if len(indices) else 0
+        indices_nbytes = (
+            len(indices) * len(indices[0]) * indices[0].itemsize if len(indices) else 0
+        )
         sparse_nbytes = indices_nbytes + self._nonzero_count * arr.itemsize
         if sparse_nbytes < self._nbytes:
             self._inds = tuple([ind.astype(self._ind_dtype) for ind in indices])
@@ -90,7 +93,15 @@ class ObservationCompressor:
     Class that supports the storage and retrieval of compressed,
     image-based observations.
     """
-    def __init__(self, buffer_size: int, n_envs: int, n_stack: int, image_shape: Tuple, dtype=np.uint8):
+
+    def __init__(
+        self,
+        buffer_size: int,
+        n_envs: int,
+        n_stack: int,
+        image_shape: Tuple,
+        dtype=np.uint8,
+    ):
         """
         :param buffer_size: size of replay/rollout buffer
         :param n_envs: number of environments used in rollout generation

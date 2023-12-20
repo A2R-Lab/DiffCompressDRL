@@ -12,23 +12,6 @@ from stable_baselines3.common.callbacks import BaseCallback, EvalCallback
 from atari_utils.buffers import CompressedReplayBuffer, CompressedRolloutBuffer
 
 
-ALGS = ["PPO", "QRDQN"]
-ENVS = [
-    "AsteroidsNoFrameskip-v4",
-    "BeamRiderNoFrameskip-v4",
-    "BreakoutNoFrameskip-v4",
-    "EnduroNoFrameskip-v4",
-    "MsPacmanNoFrameskip-v4",
-    "PongNoFrameskip-v4",
-    "QbertNoFrameskip-v4",
-    "RoadRunnerNoFrameskip-v4",
-    "SeaquestNoFrameskip-v4",
-    "SpaceInvadersNoFrameskip-v4",
-]
-SEEDS = [1, 2, 3, 4, 5]
-COMPRESS = [False, True]
-
-
 class CustomCallback(BaseCallback):
     def __init__(self, verbose=0):
         super().__init__(verbose)
@@ -45,12 +28,8 @@ class CustomCallback(BaseCallback):
 
         # Only log obs_nonzero_count if using compressed buffer
         if hasattr(buffer, "obs_comp"):
-            self.logger.record(
-                "eval/obs_nonzero_count", buffer.obs_comp.nonzer_count
-            )
-        self.logger.record(
-            "eval/nbytes", buffer.obs_comp.nbytes
-        )
+            self.logger.record("eval/obs_nonzero_count", buffer.obs_comp.nonzer_count)
+        self.logger.record("eval/nbytes", buffer.obs_comp.nbytes)
         return True
 
 
@@ -71,8 +50,6 @@ def train(cfg, seed):
     print(f"Running experiment {run_name}")
 
     n_envs = cfg.PPO.n_envs if cfg.alg == "PPO" else cfg.QRDQN.n_envs
-
-    import pdb; pdb.set_trace()
 
     # Create evaluation callback
     eval_env = make_atari_env(cfg.env, n_envs=n_envs, seed=seed)
@@ -134,7 +111,9 @@ def train(cfg, seed):
         return
 
     model.learn(
-        total_timesteps=cfg.total_timesteps, tb_log_name=run_name, callback=eval_callback
+        total_timesteps=cfg.total_timesteps,
+        tb_log_name=run_name,
+        callback=eval_callback,
     )
     model.save(run_name)
 
@@ -142,7 +121,10 @@ def train(cfg, seed):
 def create_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--config", type=str, default="cfgs/experiment.yaml", help="Path to config YAML file."
+        "--config",
+        type=str,
+        default="cfgs/experiment.yaml",
+        help="Path to config YAML file.",
     )
     return parser
 
