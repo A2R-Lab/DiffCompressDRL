@@ -1,0 +1,4 @@
+alg: PPO
+env: AsteroidsNoFrameskip-v4
+seeds: [0]
+compress: True
