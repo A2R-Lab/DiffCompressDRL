@@ -44,8 +44,11 @@ class CustomCallback(BaseCallback):
         # Only log obs_nonzero_count if using compressed buffer
         if hasattr(buffer, "obs_comp"):
             self.logger.record(
-                "eval/obs_nonzero_count", buffer.obs_comp.get_nonzero_count()
+                "eval/obs_nonzero_count", buffer.obs_comp.nonzer_count
             )
+        self.logger.record(
+            "eval/nbytes", buffer.obs_comp.nbytes
+        )
         return True
 
 
