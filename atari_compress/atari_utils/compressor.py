@@ -140,7 +140,12 @@ class ObservationCompressor:
 
         return sparse_nbytes + self.obs.nbytes + self.obs_inds.nbytes
 
-    def _add_obs(self, obs: np.ndarray, pos: int):
+    def _add_obs(self, obs: np.ndarray, pos: int) -> None:
+        """
+        Compress and store input observation.
+        :param obs: uncompressed input observation of shape (self.n_stack,) + self.image_shape
+        :param pos: position w.r.t. uncompressed buffer in which to store the observation
+        """
         assert obs.shape == (self.n_stack,) + self.image_shape
         assert 0 <= pos < self.buffer_size * self.n_envs
 
@@ -178,7 +183,12 @@ class ObservationCompressor:
             obs_diff = observation.astype(np.int16) - self.obs[obs_pos].astype(np.int16)
             self.sparse_obs[obs_pos][sparse_obs_pos - 1].set(obs_diff)
 
-    def add(self, obs: np.ndarray, pos: int):
+    def add(self, obs: np.ndarray, pos: int) -> None:
+        """
+        Compress and store input obserations.
+        :param obs: uncompressed observation of shape (self.n_envs, self.n_stack,) + self.image_shape
+        :param pos: position w.r.t. uncompressed buffer in which to store the observation
+        """
         assert (
             obs.shape
             == (
@@ -192,7 +202,12 @@ class ObservationCompressor:
         for i in range(self.n_envs):
             self._add_obs(obs[i], (self.buffer_size * i) + pos)
 
-    def _get_obs(self, idx: int):
+    def _get_obs(self, idx: int) -> np.ndarray:
+        """
+        Uncompress and return observation at given index.
+        :param idx: observation index w.r.t. uncompressed buffer
+        :returns: uncompressed observation of shape (self.n_stack,) + self.image_shape
+        """
         # Get observation at index idx from self.obs and/or self.sparse_obs
         if idx == -1:
             return np.zeros(self.image_shape)
@@ -211,7 +226,12 @@ class ObservationCompressor:
         # Diff obs with self.obs[obs_pos]
         return obs_base + self.sparse_obs[obs_idx][sparse_obs_idx - 1].to_numpy()
 
-    def get(self, batch_inds: np.ndarray):
+    def get(self, batch_inds: np.ndarray) -> np.ndarray:
+        """
+        Uncompress and return observations at given indices.
+        :param batch_inds: observation indices w.r.t. uncompressed buffer
+        :returns: uncompressed observations of shape (batch_size, self.n_stack,) + self.image_shape
+        """
         # Get observation at batch_inds relative to self.obs_inds
         assert all([0 <= idx < self.buffer_size * self.n_envs for idx in batch_inds])
 
