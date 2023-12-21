@@ -12,8 +12,8 @@ DiffCompressDRL makes use of differential image encodings in order to compress a
 
 We find our compression method is able to reduce the memory footprint by as much as 14.2x and 16.7x across tasks from the Atari 2600 benchmark and the DeepMind Control Suite respectively, while not affecting convergence.
 
-<img width="400" alt="image" src="https://github.com/A2R-Lab/DiffCompressDRL/assets/8332062/212e41b6-941f-4e32-ad26-f2fa523f5131">
-<img width="560" alt="image" src="https://github.com/A2R-Lab/DiffCompressDRL/assets/8332062/076eec6b-95df-4552-8699-470143b9d822">
+<img width="300" alt="image" src="https://github.com/A2R-Lab/DiffCompressDRL/assets/8332062/212e41b6-941f-4e32-ad26-f2fa523f5131">
+<img width="420" alt="image" src="https://github.com/A2R-Lab/DiffCompressDRL/assets/8332062/076eec6b-95df-4552-8699-470143b9d822">
 
 
 
