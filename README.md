@@ -6,23 +6,24 @@ Source code and numerical experiments for the paper: "[Differentially Encoded Ob
 
 **This package contains submodules make sure to run ```git submodule update --init --recursive```** after cloning!
 
-## Installation
+## Quick-Start Guide
 
+Requires Python 3.8+
 
+### Atari Experiments
 
-## Atari Experiments
 ```
-cd atari_compress
-python3 train.py --env ENV --alg ALG --compress
+python3 -m pip install requirements.txt
+cd atari_compress/
+python3 train.py --config cfgs/experiment.yaml
 ```
-where `--compress` turns on compression and leaving it off will run the standard algorithm
+Params are loaded from a supplied YAML file and overwrite `cfgs/default.yaml`. The main arguments are:
+* `alg`, the algorithm to use (i.e. `PPO` or `QRDQN`)
+* `env`, the Atari environment
+* `seeds`, list of random seeds
+* `compress`, whether to turn on observation compression
 
-and where `ALG` is one of:
-```
-PPO
-QRDQN
-```
-and where `ENV` is one of:
+We tested on the following 10 Atari environments:
 ```
 AsteroidsNoFrameskip-v4
 BeamRiderNoFrameskip-v4
@@ -36,10 +37,13 @@ SeaquestNoFrameskip-v4
 SpaceInvadersNoFrameskip-v4
 ```
 
-## DeepMind Control Suite Tasks
+
+### DeepMind Control Suite Experiments
+
 ```
-cd drqv2_compress
-python3 train.py --task=TASK --full_compress=True
+cd drqv2_compress/
+# Follow install instructions in README.md
+python3 train.py task=TASK full_compress=True
 ```
 where you can turn on half or full compression with `--full_compress=True` or `--half_compress=True`.
 
@@ -48,7 +52,7 @@ and where `TASK` is one of:
 quadruped_walk
 walker_walk
 ```
-or any of the many other tasks that we have not tested in the DMC (see `/drqv2_compess/cfpgs/task`)
+or any of the many other tasks that we have not explicitly tested in the DMC (see `/drqv2_compress/cfgs/task`).
 
 ### Citing
 To cite this work in your research, please use the following bibtex:

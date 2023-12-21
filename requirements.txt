@@ -1,0 +1,6 @@
+torch>=1.13
+gym[atari]
+pandas
+omegaconf
+stable-baselines3==1.5.0
+sb3-contrib==1.5.0
