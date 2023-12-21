@@ -1,14 +1,27 @@
-# DiffCompressDRL
+# DiffCompressDRL: Differentially Encoded Observation Spaces 
 <img width="720" alt="image_diff_example (1)" src="https://github.com/A2R-Lab/DiffCompressDRL/assets/8332062/7cbea8b2-225c-4414-a9f7-1fd6f6685f3c">
 
 
 Source code and numerical experiments for the paper: "[Differentially Encoded Observation Spaces for Perceptive Reinforcement Learning](https://arxiv.org/pdf/2310.01767.pdf)"
 
-**This package contains submodules make sure to run ```git submodule update --init --recursive```** after cloning!
+## Method
+DiffCompressDRL makes use of differential image encodings in order to compress and thereby drastically reduce the overall memory footprint of perceptive-based deep RL. In brief, we make use of a custom observation compressor that functions as follows:
+1. Given a set of `N` input observations of shape `(N, F, H, W, C)`, where `F` is the frame-stack size, we compute and store temporal indices for each observation (this allows us to store one copy of each individual image, instead of duplicates across multiple stacks).
+2. We store every `F`th raw image observation `o_r: (H, W, C)`, compressing all other images `o_i` by storing the difference between it and the reference in sparse matrix format `SparseArray(o_i - o_r)` (see diagram above).
+3. To retrieve an observation, we either return it immediately (if it is stored in raw format) or uncompress it by adding its refernce image `o_r` back to it (`o_i = SparseArray(o_i - o_r) + o_r`).
+
+We find our compression method is able to reduce the memory footprint by as much as 14.2x and 16.7x across tasks from the Atari 2600 benchmark and the DeepMind Control Suite respectively, while not affecting convergence.
+
+<img width="400" alt="image" src="https://github.com/A2R-Lab/DiffCompressDRL/assets/8332062/212e41b6-941f-4e32-ad26-f2fa523f5131">
+<img width="560" alt="image" src="https://github.com/A2R-Lab/DiffCompressDRL/assets/8332062/076eec6b-95df-4552-8699-470143b9d822">
+
+
 
 ## Quick-Start Guide
 
 Requires Python 3.8+
+
+**This package contains submodules make sure to run ```git submodule update --init --recursive```** after cloning!
 
 ### Atari Experiments
 
