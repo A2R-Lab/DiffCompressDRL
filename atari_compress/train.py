@@ -1,5 +1,7 @@
+import os
 import argparse
 import datetime
+from omegaconf import OmegaConf
 
 from stable_baselines3.common.env_util import make_atari_env
 from stable_baselines3.common.vec_env import VecFrameStack
@@ -8,23 +10,6 @@ from sb3_contrib import QRDQN
 from stable_baselines3.common.callbacks import BaseCallback, EvalCallback
 
 from atari_utils.buffers import CompressedReplayBuffer, CompressedRolloutBuffer
-
-
-ALGS = ["PPO", "QRDQN"]
-ENVS = [
-    "AsteroidsNoFrameskip-v4",
-    "BeamRiderNoFrameskip-v4",
-    "BreakoutNoFrameskip-v4",
-    "EnduroNoFrameskip-v4",
-    "MsPacmanNoFrameskip-v4",
-    "PongNoFrameskip-v4",
-    "QbertNoFrameskip-v4",
-    "RoadRunnerNoFrameskip-v4",
-    "SeaquestNoFrameskip-v4",
-    "SpaceInvadersNoFrameskip-v4",
-]
-SEEDS = [1, 2, 3, 4, 5]
-COMPRESS = [False, True]
 
 
 class CustomCallback(BaseCallback):
@@ -43,12 +28,8 @@ class CustomCallback(BaseCallback):
 
         # Only log obs_nonzero_count if using compressed buffer
         if hasattr(buffer, "obs_comp"):
-            self.logger.record(
-                "eval/obs_nonzero_count", buffer.obs_comp.nonzer_count
-            )
-        self.logger.record(
-            "eval/nbytes", buffer.obs_comp.nbytes
-        )
+            self.logger.record("eval/obs_nonzero_count", buffer.obs_comp.nonzer_count)
+        self.logger.record("eval/nbytes", buffer.obs_comp.nbytes)
         return True
 
 
@@ -59,44 +40,49 @@ def create_tb_log_name(alg, env, seed, compress):
     return log_name
 
 
-def train(alg, env, seed, compress, total_timesteps=1e7):
-    run_name = create_tb_log_name(alg, env, seed, compress)
+def train(cfg, seed):
+    run_name = create_tb_log_name(cfg.alg, cfg.env, seed, cfg.compress)
+    log_path = os.path.join(cfg.log, run_name)
+
+    # Create log directory (if it doesn't exist), and save config
+    os.makedirs(log_path, exist_ok=True)
+    OmegaConf.save(cfg, os.path.join(log_path, "config.yaml"))
     print(f"Running experiment {run_name}")
 
-    n_envs = 8 if alg == "PPO" else 1
+    n_envs = cfg.PPO.n_envs if cfg.alg == "PPO" else cfg.QRDQN.n_envs
 
     # Create evaluation callback
-    eval_env = make_atari_env(env, n_envs=1, seed=seed)
-    eval_env = VecFrameStack(eval_env, n_stack=4)
+    eval_env = make_atari_env(cfg.env, n_envs=n_envs, seed=seed)
+    eval_env = VecFrameStack(eval_env, n_stack=cfg.n_stack)
     eval_callback = EvalCallback(
         eval_env,
-        best_model_save_path=f"./logs/{run_name}",
-        log_path=f"./logs/{run_name}",
-        eval_freq=max(50000 // n_envs, 1),
-        n_eval_episodes=3,
-        deterministic=True,
-        verbose=0,
+        best_model_save_path=log_path,
+        log_path=log_path,
+        eval_freq=max(cfg.eval.eval_freq // n_envs, 1),
+        n_eval_episodes=cfg.eval.n_eval_episodes,
+        deterministic=cfg.eval.deterministic,
+        verbose=cfg.verbose,
         callback_after_eval=CustomCallback(),
     )
 
-    if alg == "PPO":
-        vec_env = make_atari_env(env, n_envs=n_envs, seed=seed)
-        vec_env = VecFrameStack(vec_env, n_stack=4)
+    if cfg.alg == "PPO":
+        vec_env = make_atari_env(cfg.env, n_envs=n_envs, seed=seed)
+        vec_env = VecFrameStack(vec_env, n_stack=cfg.n_stack)
 
         model = PPO(
             "CnnPolicy",
             vec_env,
-            verbose=0,
-            n_steps=128,
-            n_epochs=4,
-            batch_size=256,
-            learning_rate=2.5e-4,
-            clip_range=0.1,
-            vf_coef=0.5,
-            ent_coef=0.01,
-            tensorboard_log="./tensorboard_logs/",
+            verbose=cfg.verbose,
+            n_steps=cfg.PPO.n_steps,
+            n_epochs=cfg.PPO.n_epochs,
+            batch_size=cfg.PPO.batch_size,
+            learning_rate=cfg.PPO.learning_rate,
+            clip_range=cfg.PPO.clip_range,
+            vf_coef=cfg.PPO.vf_coef,
+            ent_coef=cfg.PPO.ent_coef,
+            tensorboard_log=cfg.tensorboard_log,
         )
-        if compress:
+        if cfg.compress:
             model.rollout_buffer = CompressedRolloutBuffer(
                 model.n_steps,
                 model.observation_space,
@@ -106,52 +92,40 @@ def train(alg, env, seed, compress, total_timesteps=1e7):
                 gae_lambda=model.gae_lambda,
                 n_envs=model.n_envs,
             )
-    elif alg == "QRDQN":
-        vec_env = make_atari_env(env, n_envs=n_envs, seed=seed)
+    elif cfg.alg == "QRDQN":
+        vec_env = make_atari_env(cfg.env, n_envs=n_envs, seed=seed)
         vec_env = VecFrameStack(vec_env, n_stack=4)
 
         model = QRDQN(
             "CnnPolicy",
             vec_env,
-            exploration_fraction=0.025,
-            buffer_size=100000,
-            optimize_memory_usage=False,
-            verbose=0,
-            tensorboard_log="./tensorboard_logs/",
-            replay_buffer_class=(CompressedReplayBuffer if compress else None),
+            exploration_fraction=cfg.QRDQN.exploration_fraction,
+            buffer_size=cfg.QRDQN.buffer_size,
+            optimize_memory_usage=cfg.QRDQN.optimize_memory_usage,
+            verbose=cfg.verbose,
+            tensorboard_log=cfg.tensorboard_log,
+            replay_buffer_class=(CompressedReplayBuffer if cfg.compress else None),
         )
     else:
         print("Invalid alg supplied.")
         return
 
     model.learn(
-        total_timesteps=total_timesteps, tb_log_name=run_name, callback=eval_callback
+        total_timesteps=cfg.total_timesteps,
+        tb_log_name=run_name,
+        callback=eval_callback,
     )
     model.save(run_name)
 
 
 def create_parser():
     parser = argparse.ArgumentParser()
-
     parser.add_argument(
-        "--alg", type=str, default="PPO", help="Name of algorithm to use (PPO, QRDQN)."
-    )
-    parser.add_argument(
-        "--env",
+        "--config",
         type=str,
-        default=None,
-        help="Atari gym environment to run.",
+        default="cfgs/experiment.yaml",
+        help="Path to config YAML file.",
     )
-    parser.add_argument(
-        "--seeds", type=int, nargs="+", default=[1], help="List of random seeds."
-    )
-    parser.add_argument(
-        "--compress", action="store_true", help="Use observation space compression."
-    )
-    parser.add_argument(
-        "--all", action="store_true", help="Run all experiments for 500k steps."
-    )
-
     return parser
 
 
@@ -159,22 +133,11 @@ if __name__ == "__main__":
     parser = create_parser()
     args = parser.parse_args()
 
-    if not args.all:
-        if not args.env:
-            raise ValueError("No env supplied!")
-        for seed in args.seeds:
-            train(args.alg, args.env, seed, args.compress)
-    elif args.all and args.env is not None:
-        assert args.env in ENVS
-        print(f"Running all experiments for env {args.env}")
-        for alg in ALGS:
-            for compress in COMPRESS:
-                for seed in SEEDS:
-                    train(alg, args.env, seed, compress)
-    else:
-        print("Running all experiments!")
-        for alg in ALGS:
-            for env in ENVS:
-                for compress in COMPRESS:
-                    for seed in SEEDS:
-                        train(alg, env, seed, compress)
+    # Load config parameters
+    default_config = OmegaConf.load("cfgs/default.yaml")
+    experiment_config = OmegaConf.load("cfgs/experiment.yaml")
+    cli_config = OmegaConf.from_cli()
+    config = OmegaConf.merge(default_config, experiment_config, cli_config)
+
+    for seed in config.seeds:
+        train(config, seed)
