@@ -29,6 +29,7 @@ PPO:
 
 # Default hyperparameters taken from: https://github.com/DLR-RM/rl-baselines3-zoo/blob/master/hyperparams/qrdqn.yml
 QRDQN:
+  n_envs: 1
   exploration_fraction: 0.025
   buffer_size: 100000
   optimize_memory_usage: False
