@@ -70,12 +70,12 @@ or any of the many other tasks that we have not explicitly tested in the DMC (se
 ### Citing
 To cite this work in your research, please use the following bibtex:
 ```
-@misc{grossman2023differentially,
-      title={Differentially Encoded Observation Spaces for Perceptive Reinforcement Learning}, 
-      author={Lev Grossman and Brian Plancher},
-      year={2023},
-      eprint={2310.01767},
-      archivePrefix={arXiv},
-      primaryClass={cs.RO}
+@inproceedings{grossman2024differentially,
+  author = {Grossman, Lev and Plancher, Brian},
+  title = {Differentially Encoded Observation Spaces for Perceptive Reinforcement Learning},
+  booktitle={IEEE International Conference on Robotics and Automation (ICRA)},
+  address = {Yokohama, Japan},
+  month={May.},
+  year = {2024}
 }
 ```
